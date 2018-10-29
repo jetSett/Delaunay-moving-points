@@ -10,11 +10,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    triangulation.insert(Point_2(100, 100));
-    triangulation.insert(Point_2(200, 100));
-    triangulation.insert(Point_2(100, 200));
-    triangulation.insert(Point_2(300, 200));
-
     tri_graphics = new CGAL::Qt::TriangulationGraphicsItem<Delaunay>(&triangulation);
 
     scene.addItem(tri_graphics);
