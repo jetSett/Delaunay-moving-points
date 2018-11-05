@@ -35,11 +35,17 @@ public:
 public slots:
     void processInput(CGAL::Object);
 
+    void on_addRandomPointButton_clicked(bool checked);
+    void on_clearPushButton_clicked(bool checked);
+
+
 signals:
     void changed();
 private:    
 
     void addNavigation(QGraphicsView* graphicsView);
+
+    void addPoints(unsigned int number);
 
     TriangulationPointInputAndConflictZone<Delaunay> * pi;
 
