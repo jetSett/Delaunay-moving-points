@@ -24,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     scene.installEventFilter(pi);
 
+    scene.setSceneRect(-100, -100, 100, 100);
+
+
     QObject::connect(pi, SIGNAL(generate(CGAL::Object)),
              this, SLOT(processInput(CGAL::Object)));
 
