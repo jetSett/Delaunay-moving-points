@@ -9,6 +9,7 @@
 #include <CGAL/Qt/TriangulationGraphicsItem.h>
 #include <CGAL/Qt/VoronoiGraphicsItem.h>
 
+#include <CGAL/Qt/GraphicsViewNavigation.h>
 #include "pointinput.hpp"
 
 namespace Ui {
@@ -38,9 +39,11 @@ signals:
     void changed();
 private:    
 
+    void addNavigation(QGraphicsView* graphicsView);
+
     TriangulationPointInputAndConflictZone<Delaunay> * pi;
 
-
+    CGAL::Qt::GraphicsViewNavigation* navigation;
     QGraphicsScene scene;
 
     Ui::MainWindow *ui;

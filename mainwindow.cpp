@@ -27,6 +27,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(pi, SIGNAL(generate(CGAL::Object)),
              this, SLOT(processInput(CGAL::Object)));
 
+    // Navigation
+      this->addNavigation(ui->graphicsView);
+
+
 }
 
 MainWindow::~MainWindow()
@@ -36,11 +40,15 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::processInput(CGAL::Object obj){
-    cout << "Input !" << endl;
     Point_2 p;
     if(CGAL::assign(p, obj)){
-      cout << p.x() << " : " << p.y() << endl;
       triangulation.insert(p);
     }
     Q_EMIT( changed());
+}
+
+void MainWindow::addNavigation(QGraphicsView* graphicsView){
+  navigation = new CGAL::Qt::GraphicsViewNavigation();
+  graphicsView->viewport()->installEventFilter(navigation);
+  graphicsView->installEventFilter(navigation);
 }
