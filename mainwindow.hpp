@@ -18,6 +18,7 @@ class MainWindow;
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef K::Point_2 Point_2;
+typedef K::Vector_2 Vector_2;
 typedef K::Iso_rectangle_2 Iso_rectangle_2;
 
 typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
@@ -45,8 +46,12 @@ signals:
 private:    
 
     void addNavigation(QGraphicsView* graphicsView);
+    
+    void log(const QString&);
 
-    void addPoints(unsigned int number);
+    void moveBrownian();    
+    void addRandomPoints(unsigned int number);
+
 
     TriangulationPointInputAndConflictZone<Delaunay> * pi;
 
@@ -56,6 +61,8 @@ private:
     Ui::MainWindow *ui;
 
     Delaunay triangulation;
+
+    std::vector<Point_2> points_triangulation;
 
     CGAL::Qt::TriangulationGraphicsItem<Delaunay>* tri_graphics;
 

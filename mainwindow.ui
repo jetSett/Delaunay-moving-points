@@ -218,9 +218,18 @@
             <widget class="QTextEdit" name="outputText">
              <property name="maximumSize">
               <size>
-               <width>800</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::HLine</enum>
+             </property>
+             <property name="verticalScrollBarPolicy">
+              <enum>Qt::ScrollBarAlwaysOn</enum>
+             </property>
+             <property name="undoRedoEnabled">
+              <bool>false</bool>
              </property>
              <property name="readOnly">
               <bool>true</bool>
