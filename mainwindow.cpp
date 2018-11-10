@@ -1,4 +1,7 @@
 #include <iostream>
+#include <QTime>
+
+#include <QMessageBox>
 
 #include <CGAL/point_generators_2.h>
 
@@ -35,8 +38,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Navigation
       this->addNavigation(ui->graphicsView);
-
-
 }
 
 MainWindow::~MainWindow()
@@ -75,8 +76,11 @@ void MainWindow::addPoints(unsigned int number){
     for(unsigned i = 0; i < number; ++i){
         points.push_back(*pg++);
     }
+    QTime timer;
+    timer.start();
     triangulation.insert(points.begin(), points.end());
-
+    ui->outputText->insertPlainText(QString("Inserted ") + QString::number(number) + 
+        QString(" points in ") + QString::number(timer.elapsed()) + QString("ms\n"));
     QApplication::restoreOverrideCursor();
     Q_EMIT( changed());
 
@@ -84,5 +88,10 @@ void MainWindow::addPoints(unsigned int number){
 
 void MainWindow::on_clearPushButton_clicked(bool){
     triangulation.clear();
+    ui->outputText->insertPlainText("Triangulation cleared\n");
     Q_EMIT(changed());
+}
+
+void MainWindow::on_moveButton_clicked(bool){
+    QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
 }

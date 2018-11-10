@@ -38,6 +38,7 @@ public slots:
     void on_addRandomPointButton_clicked(bool checked);
     void on_clearPushButton_clicked(bool checked);
 
+    void on_moveButton_clicked(bool checked);
 
 signals:
     void changed();
