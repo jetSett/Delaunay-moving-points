@@ -195,12 +195,12 @@
            <item>
             <widget class="QLabel" name="label">
              <property name="text">
-              <string>Number of iterations (in ms)</string>
+              <string>Delay (in ms)</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QSpinBox" name="numberIterationsSpinBox">
+            <widget class="QSpinBox" name="delaySpinBox">
              <property name="minimum">
               <number>1</number>
              </property>

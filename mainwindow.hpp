@@ -43,6 +43,8 @@ public slots:
     void on_startButton_clicked(bool checked);
     void on_stopButton_clicked(bool checked);
 
+    void on_delaySpinBox_valueChanged(int ms);
+
     void move();
 
 signals:
@@ -66,8 +68,6 @@ private:
     Ui::MainWindow *ui;
 
     Delaunay triangulation;
-
-    std::vector<Point_2> points_triangulation;
 
     CGAL::Qt::TriangulationGraphicsItem<Delaunay>* tri_graphics;
 

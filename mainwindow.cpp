@@ -55,7 +55,6 @@ void MainWindow::processInput(CGAL::Object obj){
     Point_2 p;
     if(CGAL::assign(p, obj)){
       triangulation.insert(p);
-      points_triangulation.push_back(p);
     }
     Q_EMIT( changed());
 }
@@ -84,9 +83,6 @@ void MainWindow::addRandomPoints(unsigned int number){
     }
     QTime timer;
     timer.start();
-    for(auto &p : points){
-        points_triangulation.push_back(p);
-    }
 
     triangulation.insert(points.begin(), points.end());
     log(QString("Inserted ") + QString::number(number) + 
@@ -98,16 +94,13 @@ void MainWindow::addRandomPoints(unsigned int number){
 
 void MainWindow::on_clearPushButton_clicked(bool){
     triangulation.clear();
-    points_triangulation.clear();
     log("Triangulation cleared\n");
     Q_EMIT(changed());
 }
 
 void MainWindow::move(){
     if(ui->brownianRadioButton->isChecked()){
-        for(int i = 0; i<ui->numberIterationsSpinBox->value(); ++i){
-            moveBrownian();
-        }
+        moveBrownian();
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
         on_stopButton_clicked(true);
@@ -115,10 +108,14 @@ void MainWindow::move(){
 
 }
 
+void MainWindow::on_delaySpinBox_valueChanged(int ms){
+    timer.setInterval(ms);
+}
+
 void MainWindow::on_startButton_clicked(bool){
     ui->startButton->setEnabled(false);
     ui->stopButton->setEnabled(true);
-    timer.start(200);
+    timer.start(ui->delaySpinBox->value());
 }
 
 void MainWindow::on_stopButton_clicked(bool){
@@ -132,7 +129,8 @@ void MainWindow::moveBrownian(){
     float maxStep = (rect.height() + rect.width())/(2*50); // We are not going to go too far
     std::vector<Point_2> newPoints;
     //std::vectr<Point_2_> nn_before;
-    for(const Point_2 &p : points_triangulation){
+    for(auto it = triangulation.points_begin(); it != triangulation.points_end(); ++it){
+        Point_2 p = *it;
         //nn_before.push_back(triangulation.nearest_vertex(p));
         float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
         float theta = 2*3.1415*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX)); // random [0, 2pi] 
@@ -141,15 +139,11 @@ void MainWindow::moveBrownian(){
         newPoints.push_back(p+v);
     }
     triangulation.clear();
-    points_triangulation.clear();
 
     QTime timer;
     timer.start();
     triangulation.insert(newPoints.begin(), newPoints.end());
     log(QString("Movement in ") + QString::number(timer.elapsed()) + QString(" ms\n"));
-    for(auto &p : newPoints){
-        points_triangulation.push_back(p);
-    }
     Q_EMIT(changed());
 }
 
