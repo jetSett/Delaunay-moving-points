@@ -193,17 +193,42 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="moveButton">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Number of iterations (in ms)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="numberIterationsSpinBox">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>1000000</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="startButton">
              <property name="text">
               <string>Start moving</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="stopButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Stop moving</string>
              </property>
             </widget>
            </item>
           </layout>
          </item>
         </layout>
-        <zorder>groupBox</zorder>
-        <zorder>verticalLayoutWidget</zorder>
        </widget>
       </item>
       <item>

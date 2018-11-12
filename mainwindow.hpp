@@ -2,6 +2,7 @@
 #define MAINWINDOW_HPP
 
 #include <QMainWindow>
+#include <QTimer>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
@@ -39,7 +40,10 @@ public slots:
     void on_addRandomPointButton_clicked(bool checked);
     void on_clearPushButton_clicked(bool checked);
 
-    void on_moveButton_clicked(bool checked);
+    void on_startButton_clicked(bool checked);
+    void on_stopButton_clicked(bool checked);
+
+    void move();
 
 signals:
     void changed();
@@ -52,6 +56,7 @@ private:
     void moveBrownian();    
     void addRandomPoints(unsigned int number);
 
+    QTimer timer;
 
     TriangulationPointInputAndConflictZone<Delaunay> * pi;
 

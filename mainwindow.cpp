@@ -41,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Navigation
       this->addNavigation(ui->graphicsView);
+
+      QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(move()));
 }
 
 MainWindow::~MainWindow()
@@ -101,19 +103,35 @@ void MainWindow::on_clearPushButton_clicked(bool){
     Q_EMIT(changed());
 }
 
-void MainWindow::on_moveButton_clicked(bool){
+void MainWindow::move(){
     if(ui->brownianRadioButton->isChecked()){
-        moveBrownian();
+        for(int i = 0; i<ui->numberIterationsSpinBox->value(); ++i){
+            moveBrownian();
+        }
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
+        on_stopButton_clicked(true);
     }
+
+}
+
+void MainWindow::on_startButton_clicked(bool){
+    ui->startButton->setEnabled(false);
+    ui->stopButton->setEnabled(true);
+    timer.start(200);
+}
+
+void MainWindow::on_stopButton_clicked(bool){
+    ui->startButton->setEnabled(true);
+    ui->stopButton->setEnabled(false);
+    timer.stop();
 }
 
 void MainWindow::moveBrownian(){
     QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
     float maxStep = (rect.height() + rect.width())/(2*50); // We are not going to go too far
     std::vector<Point_2> newPoints;
-    //std::vector<Point_2> nn_before;
+    //std::vectr<Point_2_> nn_before;
     for(const Point_2 &p : points_triangulation){
         //nn_before.push_back(triangulation.nearest_vertex(p));
         float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
