@@ -4,26 +4,18 @@
 #include <QMainWindow>
 #include <QTimer>
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Delaunay_triangulation_2.h>
-
 #include <CGAL/Qt/TriangulationGraphicsItem.h>
 #include <CGAL/Qt/VoronoiGraphicsItem.h>
 
 #include <CGAL/Qt/GraphicsViewNavigation.h>
+
+#include "MTriangulation.hpp"
+
 #include "pointinput.hpp"
 
 namespace Ui {
 class MainWindow;
 }
-
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef K::Point_2 Point_2;
-typedef K::Vector_2 Vector_2;
-typedef K::Iso_rectangle_2 Iso_rectangle_2;
-
-typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
-
 
 class MainWindow : public QMainWindow
 {
@@ -45,6 +37,9 @@ public slots:
 
     void on_delaySpinBox_valueChanged(int ms);
 
+    void on_naiveRadioButton_clicked();
+    void on_hintRadioButton_clicked();
+
     void move();
 
 signals:
@@ -55,21 +50,20 @@ private:
     
     void log(const QString&);
 
-    void moveBrownian();    
     void addRandomPoints(unsigned int number);
 
     QTimer timer;
 
-    TriangulationPointInputAndConflictZone<Delaunay> * pi;
+    TriangulationPointInputAndConflictZone<MTriangulation> * pi;
 
     CGAL::Qt::GraphicsViewNavigation* navigation;
     QGraphicsScene scene;
 
     Ui::MainWindow *ui;
 
-    Delaunay triangulation;
+    MTriangulation triangulation;
 
-    CGAL::Qt::TriangulationGraphicsItem<Delaunay>* tri_graphics;
+    CGAL::Qt::TriangulationGraphicsItem<MTriangulation>* tri_graphics;
 
 };
 

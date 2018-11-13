@@ -15,11 +15,11 @@ using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow), triangulation(NAIVE)
 {
     ui->setupUi(this);
 
-    tri_graphics = new CGAL::Qt::TriangulationGraphicsItem<Delaunay>(&triangulation);
+    tri_graphics = new CGAL::Qt::TriangulationGraphicsItem<MTriangulation>(&triangulation);
 
     scene.addItem(tri_graphics);
 
@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
              tri_graphics, SLOT(modelChanged()));
 
 
-    pi = new TriangulationPointInputAndConflictZone<Delaunay>(&scene, &triangulation, this );
+    pi = new TriangulationPointInputAndConflictZone<MTriangulation>(&scene, &triangulation, this );
 
     scene.installEventFilter(pi);
 
@@ -99,12 +99,17 @@ void MainWindow::on_clearPushButton_clicked(bool){
 }
 
 void MainWindow::move(){
+    int elapsed = 0;
     if(ui->brownianRadioButton->isChecked()){
-        moveBrownian();
+        QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
+        float maxStep = (rect.height() + rect.width())/(2*50); // We are not going to go too far
+        elapsed = triangulation.moveBrownian(maxStep);
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
         on_stopButton_clicked(true);
     }
+    log(QString("Movement in ") + QString::number(elapsed) + QString(" ms\n"));
+    Q_EMIT(changed());
 
 }
 
@@ -124,30 +129,15 @@ void MainWindow::on_stopButton_clicked(bool){
     timer.stop();
 }
 
-void MainWindow::moveBrownian(){
-    QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
-    float maxStep = (rect.height() + rect.width())/(2*50); // We are not going to go too far
-    std::vector<Point_2> newPoints;
-    //std::vectr<Point_2_> nn_before;
-    for(auto it = triangulation.points_begin(); it != triangulation.points_end(); ++it){
-        Point_2 p = *it;
-        //nn_before.push_back(triangulation.nearest_vertex(p));
-        float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
-        float theta = 2*3.1415*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX)); // random [0, 2pi] 
-        Vector_2 v(cos(theta), sin(theta));
-        v *= r*maxStep;
-        newPoints.push_back(p+v);
-    }
-    triangulation.clear();
-
-    QTime timer;
-    timer.start();
-    triangulation.insert(newPoints.begin(), newPoints.end());
-    log(QString("Movement in ") + QString::number(timer.elapsed()) + QString(" ms\n"));
-    Q_EMIT(changed());
+void MainWindow::log(const QString& text){
+    ui->outputText->verticalScrollBar()->setValue(ui->outputText->verticalScrollBar()->maximum());
+    ui->outputText->insertPlainText(text);
 }
 
-void MainWindow::log(const QString& text){
-    ui->outputText->insertPlainText(text);
-    ui->outputText->verticalScrollBar()->setValue(ui->outputText->verticalScrollBar()->maximum());
+void MainWindow::on_naiveRadioButton_clicked(){
+    triangulation.setInsertStyle(NAIVE);
+}
+
+void MainWindow::on_hintRadioButton_clicked(){
+    triangulation.setInsertStyle(HINT);
 }
