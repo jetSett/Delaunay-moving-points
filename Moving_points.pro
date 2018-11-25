@@ -25,4 +25,4 @@ LIBS        += -lCGAL
 LIBS        += -lCGAL_Qt5
 LIBS        += -lgmp
 LIBS        += -lmpfr
-QMAKE_CXXFLAGS += -frounding-math -O3 -std=c++14
+QMAKE_CXXFLAGS += -frounding-math -O3 -std=c++14 -g

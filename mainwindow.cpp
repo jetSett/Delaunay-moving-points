@@ -102,7 +102,7 @@ void MainWindow::move(){
     int elapsed = 0;
     if(ui->brownianRadioButton->isChecked()){
         QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
-        float maxStep = (rect.height() + rect.width())/(2*50); // We are not going to go too far
+        float maxStep = (rect.height() + rect.width())/(2*100); // We are not going to go too far
         elapsed = triangulation.moveBrownian(maxStep);
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
