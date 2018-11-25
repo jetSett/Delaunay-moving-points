@@ -84,7 +84,7 @@ void MainWindow::addRandomPoints(unsigned int number){
     QTime timer;
     timer.start();
 
-    triangulation.insert(points.begin(), points.end());
+    triangulation.insert_naive(points);
     log(QString("Inserted ") + QString::number(number) + 
         QString(" points in ") + QString::number(timer.elapsed()) + QString("ms\n"));
     QApplication::restoreOverrideCursor();

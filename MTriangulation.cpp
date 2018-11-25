@@ -9,6 +9,25 @@ std::size_t Hash_point::operator()(const Point_2& p) const noexcept{
 
 MTriangulation::MTriangulation(InsertStyle is) : Delaunay(), iStyle(is){}
 
+MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f){
+    Vertex_handle vh = Delaunay::insert(p, f);
+    nearest_neight[vh] = CGAL::nearest_neighbor(*this, vh);
+    auto circulator = vh->incident_vertices();
+    if(circulator != nullptr){
+        auto begin = circulator;
+        do{
+            nearest_neight[circulator] = CGAL::nearest_neighbor(*this, circulator);
+            circulator++;
+        }while(circulator != begin);
+    }
+    return vh;
+}
+
+void MTriangulation::clear(){
+    nearest_neight.clear();
+    Delaunay::clear();
+}
+
 int MTriangulation::moveBrownian(float rMax){
     QTime timer;
     timer.start();
@@ -19,7 +38,7 @@ int MTriangulation::moveBrownian(float rMax){
         if(not is_infinite(it)){
             Point_2 p = it->point();
              if(iStyle == HINT){
-                 Vertex_handle nn_handle = CGAL::nearest_neighbor(*this, it);
+                 Vertex_handle nn_handle = nearest_neight[it];
                  assert(p != nn_handle->point());
                  is_nn_of.insert({nn_handle->point(), p});
              }
@@ -59,8 +78,13 @@ void MTriangulation::setInsertStyle(InsertStyle is){
     iStyle = is;
 }
 
-void MTriangulation::insert_naive(std::vector<Point_2>& newPoints){
-    insert(newPoints.begin(), newPoints.end());
+void MTriangulation::insert_naive(std::vector<Point_2>& points){
+    CGAL::spatial_sort(points.begin(), points.end());
+    Face_handle face_hint = Face_handle();
+    for(Point_2 p : points){
+        Vertex_handle v_handle = insert(p, face_hint);
+        face_hint = v_handle->face();
+    }
 }
 
 void MTriangulation::insert_hint(std::vector<Point_2>& newPoints, const Hint_insertion& is_nn_of){
