@@ -141,3 +141,7 @@ void MainWindow::on_naiveRadioButton_clicked(){
 void MainWindow::on_hintRadioButton_clicked(){
     triangulation.setInsertStyle(HINT);
 }
+
+void MainWindow::on_cgalMoveButton_clicked(){
+    triangulation.setInsertStyle(MOVE_CGAL);
+}

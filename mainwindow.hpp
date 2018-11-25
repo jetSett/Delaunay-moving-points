@@ -39,6 +39,7 @@ public slots:
 
     void on_naiveRadioButton_clicked();
     void on_hintRadioButton_clicked();
+    void on_cgalMoveButton_clicked();
 
     void move();
 

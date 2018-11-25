@@ -10,7 +10,7 @@ typedef K::Iso_rectangle_2 Iso_rectangle_2;
 typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
 
 enum InsertStyle{
-    NAIVE, HINT
+    NAIVE, HINT, MOVE_CGAL
 };
 
 class MTriangulation : public Delaunay{
@@ -23,10 +23,10 @@ public:
 
 private:
 
-    void insert_move(const std::vector<Point_2>&, const std::vector<Face_handle>&);
+    void insert_move(const std::vector<Point_2>&, const std::vector<Vertex_handle>&);
 
     void insert_naive(const std::vector<Point_2>&);
-    void insert_hint(const std::vector<Point_2>&, const std::vector<Face_handle>&);
+    void insert_hint(const std::vector<Point_2>&, const std::vector<Vertex_handle>&);
 
     InsertStyle iStyle;
 };
