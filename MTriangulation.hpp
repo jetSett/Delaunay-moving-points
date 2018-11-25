@@ -1,3 +1,6 @@
+#include <unordered_map>
+#include <tuple>
+#include <functional>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
 
@@ -13,6 +16,12 @@ enum InsertStyle{
     NAIVE, HINT, MOVE_CGAL
 };
 
+struct Hash_point{
+    std::size_t operator()(const Point_2& p) const noexcept;
+};
+
+using Hint_insertion = std::unordered_multimap<Point_2, Point_2, Hash_point>;
+
 class MTriangulation : public Delaunay{
 public:
     MTriangulation(InsertStyle);
@@ -23,10 +32,10 @@ public:
 
 private:
 
-    void insert_move(const std::vector<Point_2>&, const std::vector<Vertex_handle>&);
+    void insert_move(std::vector<Point_2>&, const Hint_insertion&);
 
-    void insert_naive(const std::vector<Point_2>&);
-    void insert_hint(const std::vector<Point_2>&, const std::vector<Vertex_handle>&);
+    void insert_naive(std::vector<Point_2>&);
+    void insert_hint(std::vector<Point_2>&, const Hint_insertion&);
 
     InsertStyle iStyle;
 };
