@@ -20,6 +20,7 @@ struct Hash_point{
     std::size_t operator()(const Point_2& p) const noexcept;
 };
 
+struct VertexMoveHint;
 
 class MTriangulation : public Delaunay{
 typedef std::unordered_multimap<Vertex_handle, Vertex_handle> Hint_insertion;
@@ -39,14 +40,17 @@ public:
 
 private:
 
-    void insert_move(std::vector<Point_2>&, std::unordered_map<Point_2, Vertex_handle, Hash_point>&, 
-        std::unordered_map<Vertex_handle, Point_2>&, const Hint_insertion&);
-
-    void insert_hint(std::vector<Point_2>&, std::unordered_map<Point_2, Vertex_handle, Hash_point>&, 
-        std::unordered_map<Vertex_handle, Point_2>&, const Hint_insertion&);
+    void insert_hint(std::vector<VertexMoveHint>&, std::unordered_map<Vertex_handle, Vertex_handle>& old_nn);
 
     InsertStyle iStyle;
 
     std::unordered_map<Vertex_handle, Vertex_handle> nearest_neight;
     std::unordered_map<Vertex_handle, double> nearest_neight_sqdistance;
+};
+
+struct VertexMoveHint{
+    VertexMoveHint(const MTriangulation::Vertex_handle& h, const Point_2& p) : handle(h), new_position(p){
+    }
+    MTriangulation::Vertex_handle handle;
+    Point_2 new_position;
 };

@@ -10,6 +10,29 @@ double sqdist(const Point_2& p1, const Point_2& p2){
     return (p1.x()-p2.x())*(p1.x()-p2.x())+(p1.y()-p2.y())*(p1.y()-p2.y());
 }
 
+struct CompXVertexMoveHint{
+    bool operator()(const VertexMoveHint& v1, const VertexMoveHint& v2){
+        return v1.new_position.x() < v2.new_position.x();
+    }
+};
+
+struct CompYVertexMoveHint{
+    bool operator()(const VertexMoveHint& v1, const VertexMoveHint& v2){
+        return v1.new_position.y() < v2.new_position.y();
+    }
+};
+
+struct VertexMoveHintCompTrait{
+    typedef VertexMoveHint Point_2;
+    typedef CompXVertexMoveHint Less_x_2;
+    typedef CompYVertexMoveHint Less_y_2;
+    Less_x_2 less_x_2_object() const{
+        return Less_x_2();
+    }
+    Less_y_2 less_y_2_object() const{
+        return Less_y_2();
+    }
+};
 
 MTriangulation::MTriangulation(InsertStyle is) : Delaunay(), iStyle(is){}
 
@@ -54,9 +77,7 @@ int MTriangulation::moveBrownian(float rMax){
     timer.start();
 
     std::vector<Point_2> newPoints;
-    Hint_insertion is_nn_of;
-    std::unordered_map<Point_2, Vertex_handle, Hash_point> point_to_vertex;
-    std::unordered_map<Vertex_handle, Point_2> vertex_to_point;
+    std::vector<VertexMoveHint> newPointsHint;
 
     for(auto it = all_vertices_begin(); it != all_vertices_end(); ++it){
         if(not is_infinite(it)){
@@ -68,45 +89,36 @@ int MTriangulation::moveBrownian(float rMax){
 
             Point_2 nPoint = p+v;
 
-            if(iStyle == MOVE_CGAL){
-                move(it, p+v);
-                continue;
-            }else{
-                newPoints.push_back(nPoint);
+            switch(iStyle){
+                case MOVE_CGAL:
+                    move(it, nPoint);
+                    continue;
+                break;
+                case NAIVE:
+                    newPoints.push_back(nPoint);
+                    break;
+                case HINT:
+                    newPointsHint.emplace_back(it, nPoint);
+                break;
             }
-
-             if(iStyle == HINT){
-                 Vertex_handle nn_handle = nearest_neight[it];
-                 assert(p != nn_handle->point());
-                 is_nn_of.insert({nn_handle, it});
-                 point_to_vertex[nPoint] = it;
-                 vertex_to_point[it] = nPoint;
-             }
-
         }
     }
-    if(iStyle != MOVE_CGAL){
-        clear();
-        insert_move(newPoints, point_to_vertex, vertex_to_point, is_nn_of);
+
+    switch(iStyle){
+        case MOVE_CGAL:
+        break;
+        case NAIVE:
+            clear();
+            insert_naive(newPoints);
+        break;
+        case HINT:
+            std::unordered_map<Vertex_handle, Vertex_handle> old_nn(nearest_neight);
+            clear();
+            insert_hint(newPointsHint, old_nn);
+        break;
     }
 
     return timer.elapsed();
-}
-
-void MTriangulation::insert_move(std::vector<Point_2>& newPoints, 
-    std::unordered_map<Point_2, Vertex_handle, Hash_point>& point_to_vertex,
-    std::unordered_map<Vertex_handle, Point_2>& vertex_to_point,
-    const Hint_insertion& is_nn_of){
-    switch(iStyle){
-    case NAIVE:
-        insert_naive(newPoints);
-        break;
-    case HINT:
-        insert_hint(newPoints, point_to_vertex, vertex_to_point, is_nn_of);
-        break;
-    case MOVE_CGAL:
-    break;
-    }
 }
 
 void MTriangulation::setInsertStyle(InsertStyle is){
@@ -122,36 +134,35 @@ void MTriangulation::insert_naive(std::vector<Point_2>& points){
     }
 }
 
-void MTriangulation::insert_hint(std::vector<Point_2>& newPoints, 
-    std::unordered_map<Point_2, Vertex_handle, Hash_point>& point_to_vertex,
-    std::unordered_map<Vertex_handle, Point_2>& vertex_to_point,
-    const Hint_insertion& is_nn_of){
-
+void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint, std::unordered_map<Vertex_handle, Vertex_handle>& old_nn){
+    using namespace std;
     unsigned long long number_improvement = 0;
+    VertexMoveHintCompTrait trait;
+    CGAL::spatial_sort(newPointsHint.begin(), newPointsHint.end(), trait);
 
-    CGAL::spatial_sort(newPoints.begin(), newPoints.end());
-
-    std::unordered_map<Vertex_handle, Vertex_handle> hints;
+    std::unordered_map<Vertex_handle, Vertex_handle> newVertexs;
 
     Vertex_handle vertex_hint = Vertex_handle();
-    for(const Point_2& p : newPoints){
-        Vertex_handle old_vertex = point_to_vertex[p];
 
-        if(hints.find(old_vertex) != hints.end()){ //if we better chose the hint, we do so
-            if(vertex_hint == Vertex_handle() or sqdist(hints[old_vertex]->point(), p) < sqdist(p, vertex_hint->point())){
-                vertex_hint = hints[old_vertex];
+    for(const VertexMoveHint& h : newPointsHint){
+        Vertex_handle old_vertex = h.handle;
+        Point_2 nPos = h.new_position;
+
+        Vertex_handle prev_nn = old_nn[old_vertex];
+
+        auto hint_it = newVertexs.find(prev_nn);
+
+        if(hint_it != newVertexs.end()){ //if there is an hint
+            Vertex_handle hint_nn = hint_it->second;
+            if(vertex_hint == Vertex_handle() or sqdist(hint_nn->point(), nPos) < sqdist(vertex_hint->point(), nPos)){ //if we better chose the hint, we do so
+                vertex_hint = hint_nn;
                 number_improvement++;
             }
         }
 
-        Vertex_handle v_handle = insert(p, vertex_hint == nullptr? Face_handle() : vertex_hint->face() );
+        Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face() );
         vertex_hint = v_handle;
-
-        auto range = is_nn_of.equal_range(old_vertex);
-        for(auto it = range.first; it != range.second; ++it){
-            Vertex_handle will_be_hinted = it->second;
-            hints[will_be_hinted] = v_handle;
-        }
+        newVertexs[old_vertex] = v_handle;
     }
-    std::cout << "Fraction of improvement : " << (double)number_improvement/newPoints.size() << std::endl;
+    std::cout << "Fraction of improvement : " << (double)number_improvement/newPointsHint.size() << std::endl;
 }
