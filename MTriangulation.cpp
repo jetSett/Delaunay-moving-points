@@ -36,7 +36,7 @@ struct VertexMoveHintCompTrait{
     }
 };
 
-MTriangulation::MTriangulation(InsertStyle is) : Delaunay(), iStyle(is), current_insert(){}
+MTriangulation::MTriangulation(InsertStyle is, MovingStyle ms) : Delaunay(), iStyle(is), mStyle(ms), current_insert(){}
 
 MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f){
     Nn_map *nn = &(nearest_neight[current_insert]);
@@ -92,7 +92,15 @@ void MTriangulation::clear(){
     Delaunay::clear();
 }
 
-int MTriangulation::moveBrownian(float rMax){
+Point_2 MTriangulation::brownianStep(Point_2 start, float rMax){
+    float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
+    float theta = 2*3.1415*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX)); // random [0, 2pi] 
+    Vector_2 v(cos(theta), sin(theta));
+    v *= r*rMax;
+    return start + v;
+}
+
+int MTriangulation::move_step(float rMax){
     QTime timer;
     timer.start();
 
@@ -102,12 +110,16 @@ int MTriangulation::moveBrownian(float rMax){
     for(auto it = all_vertices_begin(); it != all_vertices_end(); ++it){
         if(not is_infinite(it)){
             Point_2 p = it->point();
-            float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
-            float theta = 2*3.1415*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX)); // random [0, 2pi] 
-            Vector_2 v(cos(theta), sin(theta));
-            v *= r*rMax;
 
-            Point_2 nPoint = p+v;
+            Point_2 nPoint;
+
+            switch(mStyle){
+                case BROWNIAN:
+                nPoint = brownianStep(p, rMax);
+                break;
+                default:
+                break;
+            }
 
             switch(iStyle){
                 case MOVE_CGAL:
@@ -153,6 +165,10 @@ int MTriangulation::moveBrownian(float rMax){
 
 void MTriangulation::setInsertStyle(InsertStyle is){
     iStyle = is;
+}
+
+void MTriangulation::setMovingStyle(MovingStyle ms){
+    mStyle = ms;
 }
 
 void MTriangulation::insert_naive(std::vector<Point_2>& points){

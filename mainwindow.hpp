@@ -41,6 +41,10 @@ public slots:
     void on_hintRadioButton_clicked();
     void on_cgalMoveButton_clicked();
 
+    void on_brownianRadioButton_clicked();
+    void on_jumpingBallRadioButton_clicked();
+    void on_lloydRadioButton_clicked();
+
     void move();
 
 signals:

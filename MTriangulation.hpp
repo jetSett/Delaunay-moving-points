@@ -11,6 +11,10 @@ enum InsertStyle{
     NAIVE, HINT, MOVE_CGAL
 };
 
+enum MovingStyle{
+    BROWNIAN, JUMPING_BALL, LLOYD
+};
+
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef K::Point_2 Point_2;
 typedef K::Vector_2 Vector_2;
@@ -28,11 +32,14 @@ class MTriangulation : public Delaunay{
 typedef std::map<Vertex_handle, Vertex_handle> Nn_map;
 typedef std::map<Vertex_handle, double> Nn_dist_map;
 public:
-    MTriangulation(InsertStyle);
+    MTriangulation(InsertStyle, MovingStyle);
 
-    int moveBrownian(float rMax);
+    int move_step(float rMax);
+
+    Point_2 brownianStep(Point_2, float);
 
     void setInsertStyle(InsertStyle);
+    void setMovingStyle(MovingStyle);
 
     void insert_naive(std::vector<Point_2>&);
 
@@ -47,6 +54,7 @@ private:
     double insert_hint(std::vector<VertexMoveHint>&);
 
     InsertStyle iStyle;
+    MovingStyle mStyle;
 
     int current_insert;
 

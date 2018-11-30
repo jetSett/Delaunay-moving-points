@@ -15,7 +15,7 @@ using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), triangulation(NAIVE)
+    ui(new Ui::MainWindow), triangulation(NAIVE, BROWNIAN)
 {
     ui->setupUi(this);
 
@@ -103,7 +103,7 @@ void MainWindow::move(){
     if(ui->brownianRadioButton->isChecked()){
         QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
         float maxStep = (rect.height() + rect.width())/(2*100); // We are not going to go too far
-        elapsed = triangulation.moveBrownian(maxStep);
+        elapsed = triangulation.move_step(maxStep);
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
         on_stopButton_clicked(true);
@@ -144,4 +144,14 @@ void MainWindow::on_hintRadioButton_clicked(){
 
 void MainWindow::on_cgalMoveButton_clicked(){
     triangulation.setInsertStyle(MOVE_CGAL);
+}
+
+void MainWindow::on_brownianRadioButton_clicked(){
+    triangulation.setMovingStyle(BROWNIAN);
+}
+void MainWindow::on_jumpingBallRadioButton_clicked(){
+    triangulation.setMovingStyle(JUMPING_BALL);
+}
+void MainWindow::on_lloydRadioButton_clicked(){
+    triangulation.setMovingStyle(LLOYD);
 }
