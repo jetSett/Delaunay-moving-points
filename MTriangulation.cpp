@@ -36,16 +36,11 @@ struct VertexMoveHintCompTrait{
     }
 };
 
-MTriangulation::MTriangulation(InsertStyle is) : Delaunay(), iStyle(is){}
+MTriangulation::MTriangulation(InsertStyle is) : Delaunay(), iStyle(is), current_insert(){}
 
-MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f, bool moving){
-    std::unordered_map<Vertex_handle, Vertex_handle> *nn = &nearest_neight;
-    std::unordered_map<Vertex_handle, double> *nn_dist = &nearest_neight_sqdistance;
-
-    if(moving){
-        nn = &nearest_neight_move;
-        nn_dist = &nearest_neight_sqdistance_move;
-    }
+MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f){
+    Nn_map *nn = &(nearest_neight[current_insert]);
+    Nn_dist_map *nn_dist = &(nearest_neight_sqdistance[current_insert]);
 
 
     Vertex_handle vh = Delaunay::insert(p, f);
@@ -83,8 +78,8 @@ MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Fac
 }
 
 void MTriangulation::clear(){
-    nearest_neight.clear();
-    nearest_neight_sqdistance.clear();
+    nearest_neight[current_insert].clear();
+    nearest_neight_sqdistance[current_insert].clear();
     Delaunay::clear();
 }
 
@@ -129,11 +124,10 @@ int MTriangulation::moveBrownian(float rMax){
         break;
         case HINT:
             Delaunay::clear();
+            current_insert = 1-current_insert;
             insert_hint(newPointsHint);
-            nearest_neight = nearest_neight_move;
-            nearest_neight_move.clear();
-            nearest_neight_sqdistance = nearest_neight_sqdistance_move;
-            nearest_neight_sqdistance_move.clear();
+            nearest_neight[1-current_insert].clear();
+            nearest_neight_sqdistance[1-current_insert].clear();
         break;
     }
 
@@ -148,7 +142,7 @@ void MTriangulation::insert_naive(std::vector<Point_2>& points){
     CGAL::spatial_sort(points.begin(), points.end());
     Face_handle face_hint = Face_handle();
     for(Point_2 p : points){
-        Vertex_handle v_handle = insert(p, face_hint, false);
+        Vertex_handle v_handle = insert(p, face_hint);
         face_hint = v_handle->face();
     }
 }
@@ -167,7 +161,7 @@ void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
         Vertex_handle old_vertex = h.handle;
         Point_2 nPos = h.new_position;
 
-        Vertex_handle prev_nn = nearest_neight[old_vertex];
+        Vertex_handle prev_nn = nearest_neight[1-current_insert][old_vertex];
 
         auto hint_it = newVertexs.find(prev_nn);
 
@@ -179,7 +173,7 @@ void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
             }
         }
 
-        Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face(), true);
+        Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face());
         Dn(nearest_neight_move.size())
         Dn(nearest_neight.size())
         vertex_hint = v_handle;

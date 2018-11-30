@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <tuple>
+#include <array>
 #include <functional>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Triangulation_vertex_base_with_info_2.h>
@@ -15,13 +16,6 @@ typedef K::Point_2 Point_2;
 typedef K::Vector_2 Vector_2;
 typedef K::Iso_rectangle_2 Iso_rectangle_2;
 
-typedef CGAL::Triangulation_vertex_base_with_info_2<bool,K> Vbi;
-typedef CGAL::Triangulation_face_base_2<K> Fb;
-typedef CGAL::Triangulation_data_structure_2<Vbi,Fb> Tds;
-//typedef CGAL::Delaunay_triangulation_2<K,Tds> Delaunay;
-
-
-
 typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
 
 struct Hash_point{
@@ -32,7 +26,8 @@ struct VertexMoveHint;
 
 class MTriangulation : public Delaunay{
 typedef std::unordered_multimap<Vertex_handle, Vertex_handle> Hint_insertion;
-
+typedef std::unordered_map<Vertex_handle, Vertex_handle> Nn_map;
+typedef std::unordered_map<Vertex_handle, double> Nn_dist_map;
 public:
     MTriangulation(InsertStyle);
 
@@ -42,7 +37,7 @@ public:
 
     void insert_naive(std::vector<Point_2>&);
 
-    Vertex_handle insert(const Point_2&, const Face_handle& f = Face_handle(), bool moving=false);
+    Vertex_handle insert(const Point_2&, const Face_handle& f = Face_handle());
 
     void clear();
 
@@ -52,11 +47,10 @@ private:
 
     InsertStyle iStyle;
 
-    std::unordered_map<Vertex_handle, Vertex_handle> nearest_neight;
-    std::unordered_map<Vertex_handle, double> nearest_neight_sqdistance;
+    int current_insert;
 
-    std::unordered_map<Vertex_handle, Vertex_handle> nearest_neight_move;
-    std::unordered_map<Vertex_handle, double> nearest_neight_sqdistance_move;
+    std::array<Nn_map, 2> nearest_neight;
+    std::array<Nn_dist_map, 2> nearest_neight_sqdistance;
 };
 
 struct VertexMoveHint{
