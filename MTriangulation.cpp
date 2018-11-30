@@ -1,3 +1,5 @@
+#define Dn(x) //std::cout << #x << " : " << (x) << std::endl;
+#define D(x) //std::cout << (x) << std::endl;
 #include <QTime>
 #include <CGAL/nearest_neighbor_delaunay_2.h>
 #include "MTriangulation.hpp"
@@ -36,13 +38,23 @@ struct VertexMoveHintCompTrait{
 
 MTriangulation::MTriangulation(InsertStyle is) : Delaunay(), iStyle(is){}
 
-MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f){
+MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f, bool moving){
+    std::unordered_map<Vertex_handle, Vertex_handle> *nn = &nearest_neight;
+    std::unordered_map<Vertex_handle, double> *nn_dist = &nearest_neight_sqdistance;
+
+    if(moving){
+        nn = &nearest_neight_move;
+        nn_dist = &nearest_neight_sqdistance_move;
+    }
+
+
     Vertex_handle vh = Delaunay::insert(p, f);
 
-    nearest_neight[vh] = Vertex_handle();
-    nearest_neight_sqdistance[vh] = -1;
+    nn->insert({vh, Vertex_handle()});
+    nn_dist->insert({vh, -1});
 
     Vertex_circulator circ = vh->incident_vertices();
+    D(nn->size())
     if(circ == nullptr){
         return vh;
     }
@@ -51,18 +63,22 @@ MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Fac
     double min_dist = -1;
 
     do{
+        if(nn->find(circ) == nn->end()){
+            nn->insert({circ, Vertex_handle()});
+            nn_dist->insert({circ, -1});
+        }
         double dist_neight = sqdist(vh->point(), circ->point());
         if(min_dist == -1 or dist_neight < min_dist){
             min_dist = dist_neight;
-            nearest_neight[vh] = circ;
+            nn->at(vh) = circ;
         }
-        if(nearest_neight_sqdistance[circ] == -1 or dist_neight < nearest_neight_sqdistance[circ]){
-            nearest_neight_sqdistance[circ] = dist_neight;
-            nearest_neight[circ] = vh;
+        if(nn_dist->at(circ) == -1 or dist_neight < nn_dist->at(circ)){
+            nn_dist->at(circ) = dist_neight;
+            nn->at(circ) = vh;
         }
         circ++;
     }while(circ != begin);
-    nearest_neight_sqdistance[vh] = min_dist;
+    nn_dist->at(vh) = min_dist;
     return vh;
 }
 
@@ -112,9 +128,12 @@ int MTriangulation::moveBrownian(float rMax){
             insert_naive(newPoints);
         break;
         case HINT:
-            std::unordered_map<Vertex_handle, Vertex_handle> old_nn(nearest_neight);
-            clear();
-            insert_hint(newPointsHint, old_nn);
+            Delaunay::clear();
+            insert_hint(newPointsHint);
+            nearest_neight = nearest_neight_move;
+            nearest_neight_move.clear();
+            nearest_neight_sqdistance = nearest_neight_sqdistance_move;
+            nearest_neight_sqdistance_move.clear();
         break;
     }
 
@@ -129,16 +148,16 @@ void MTriangulation::insert_naive(std::vector<Point_2>& points){
     CGAL::spatial_sort(points.begin(), points.end());
     Face_handle face_hint = Face_handle();
     for(Point_2 p : points){
-        Vertex_handle v_handle = insert(p, face_hint);
+        Vertex_handle v_handle = insert(p, face_hint, false);
         face_hint = v_handle->face();
     }
 }
 
-void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint, std::unordered_map<Vertex_handle, Vertex_handle>& old_nn){
+void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
     using namespace std;
     unsigned long long number_improvement = 0;
-    VertexMoveHintCompTrait trait;
-    CGAL::spatial_sort(newPointsHint.begin(), newPointsHint.end(), trait);
+
+    CGAL::spatial_sort(newPointsHint.begin(), newPointsHint.end(), VertexMoveHintCompTrait());
 
     std::unordered_map<Vertex_handle, Vertex_handle> newVertexs;
 
@@ -148,7 +167,7 @@ void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint, std
         Vertex_handle old_vertex = h.handle;
         Point_2 nPos = h.new_position;
 
-        Vertex_handle prev_nn = old_nn[old_vertex];
+        Vertex_handle prev_nn = nearest_neight[old_vertex];
 
         auto hint_it = newVertexs.find(prev_nn);
 
@@ -160,9 +179,11 @@ void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint, std
             }
         }
 
-        Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face() );
+        Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face(), true);
+        Dn(nearest_neight_move.size())
+        Dn(nearest_neight.size())
         vertex_hint = v_handle;
         newVertexs[old_vertex] = v_handle;
     }
-    std::cout << "Fraction of improvement : " << (double)number_improvement/newPointsHint.size() << std::endl;
+    //std::cout << "Fraction of improvement : " << 100*(double)number_improvement/newPointsHint.size() << "%" << std::endl;
 }
