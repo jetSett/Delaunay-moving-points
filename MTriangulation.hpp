@@ -25,9 +25,8 @@ struct Hash_point{
 struct VertexMoveHint;
 
 class MTriangulation : public Delaunay{
-typedef std::unordered_multimap<Vertex_handle, Vertex_handle> Hint_insertion;
-typedef std::unordered_map<Vertex_handle, Vertex_handle> Nn_map;
-typedef std::unordered_map<Vertex_handle, double> Nn_dist_map;
+typedef std::map<Vertex_handle, Vertex_handle> Nn_map;
+typedef std::map<Vertex_handle, double> Nn_dist_map;
 public:
     MTriangulation(InsertStyle);
 
@@ -43,7 +42,9 @@ public:
 
 private:
 
-    void insert_hint(std::vector<VertexMoveHint>&);
+    void update_nn(Vertex_handle);
+
+    double insert_hint(std::vector<VertexMoveHint>&);
 
     InsertStyle iStyle;
 

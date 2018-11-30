@@ -1,5 +1,5 @@
-#define Dn(x) //std::cout << #x << " : " << (x) << std::endl;
-#define D(x) //std::cout << (x) << std::endl;
+#define Dn(x) std::cout << #x << " : " << (x) << std::endl;
+#define D(x) std::cout << (x) << std::endl;
 #include <QTime>
 #include <CGAL/nearest_neighbor_delaunay_2.h>
 #include "MTriangulation.hpp"
@@ -48,11 +48,20 @@ MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Fac
     nn->insert({vh, Vertex_handle()});
     nn_dist->insert({vh, -1});
 
+    update_nn(vh);
+
+    return vh;
+}
+
+void MTriangulation::update_nn(Vertex_handle vh){
+    Nn_map *nn = &(nearest_neight[current_insert]);
+    Nn_dist_map *nn_dist = &(nearest_neight_sqdistance[current_insert]);
+
     Vertex_circulator circ = vh->incident_vertices();
-    D(nn->size())
     if(circ == nullptr){
-        return vh;
+        return;
     }
+
     Vertex_circulator begin = circ;
 
     double min_dist = -1;
@@ -74,7 +83,7 @@ MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Fac
         circ++;
     }while(circ != begin);
     nn_dist->at(vh) = min_dist;
-    return vh;
+
 }
 
 void MTriangulation::clear(){
@@ -103,6 +112,7 @@ int MTriangulation::moveBrownian(float rMax){
             switch(iStyle){
                 case MOVE_CGAL:
                     move(it, nPoint);
+                    update_nn(it);
                     continue;
                 break;
                 case NAIVE:
@@ -115,6 +125,8 @@ int MTriangulation::moveBrownian(float rMax){
         }
     }
 
+    double improv = 0;
+
     switch(iStyle){
         case MOVE_CGAL:
         break;
@@ -125,13 +137,18 @@ int MTriangulation::moveBrownian(float rMax){
         case HINT:
             Delaunay::clear();
             current_insert = 1-current_insert;
-            insert_hint(newPointsHint);
+            improv = insert_hint(newPointsHint);
             nearest_neight[1-current_insert].clear();
             nearest_neight_sqdistance[1-current_insert].clear();
         break;
     }
 
-    return timer.elapsed();
+    int elapsed = timer.elapsed();
+    if(iStyle == HINT){
+        std::cout << "Fraction of improvement : " << 100*improv << "%" << std::endl;
+    }
+
+    return elapsed;
 }
 
 void MTriangulation::setInsertStyle(InsertStyle is){
@@ -147,7 +164,7 @@ void MTriangulation::insert_naive(std::vector<Point_2>& points){
     }
 }
 
-void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
+double MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
     using namespace std;
     unsigned long long number_improvement = 0;
 
@@ -174,10 +191,8 @@ void MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
         }
 
         Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face());
-        Dn(nearest_neight_move.size())
-        Dn(nearest_neight.size())
         vertex_hint = v_handle;
         newVertexs[old_vertex] = v_handle;
     }
-    //std::cout << "Fraction of improvement : " << 100*(double)number_improvement/newPointsHint.size() << "%" << std::endl;
+    return (double)number_improvement/newPointsHint.size();
 }
