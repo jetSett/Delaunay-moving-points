@@ -38,13 +38,21 @@ struct VertexMoveHintCompTrait{
 
 MTriangulation::MTriangulation(InsertStyle is, MovingStyle ms) : Delaunay(), iStyle(is), mStyle(ms), current_insert(){}
 
-MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f){
+MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Face_handle& f, Vector_2 ball){
     Nn_map *nn = &(nearest_neight[current_insert]);
     Nn_dist_map *nn_dist = &(nearest_neight_sqdistance[current_insert]);
+    Ball_map *vBall = &(vertex_ball[current_insert]);
 
+    if(ball == Vector_2(0, 0)){
+        D("coucou")
+        float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
+        float theta = 2*3.1415*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX)); // random [0, 2pi] 
+        ball = r*Vector_2(cos(theta), sin(theta));
+    }
 
     Vertex_handle vh = Delaunay::insert(p, f);
 
+    vBall->insert({vh, ball});
     nn->insert({vh, Vertex_handle()});
     nn_dist->insert({vh, -1});
 
@@ -100,7 +108,38 @@ Point_2 MTriangulation::brownianStep(Point_2 start, float rMax){
     return start + v;
 }
 
-int MTriangulation::move_step(float rMax){
+Point_2 MTriangulation::jumpBallStep(Vertex_handle start, float speed, QRectF rect){
+    Vector_2 vector = vertex_ball[current_insert][start];
+    Point_2 nPoint = start->point()+speed*vector;
+
+    if(rect.contains(QPointF(nPoint.x(), nPoint.y()))){
+        return nPoint;
+    }
+    if(nPoint.x() < rect.x()){ //too far to the left
+        nPoint = Point_2(2*rect.x()-nPoint.x(), nPoint.y());
+        vector = Vector_2(-vector.x(), vector.y());
+    }
+    if(nPoint.x() > rect.right()){ //too far to the right
+        nPoint = Point_2(2*rect.right()-nPoint.x(), nPoint.y());
+        vector = Vector_2(-vector.x(), vector.y());
+    }
+
+    if(nPoint.y() > rect.bottom()){ // too far to the bottom
+        nPoint = Point_2(nPoint.x(), 2*rect.bottom()-nPoint.y());
+        vector = Vector_2(vector.x(), -vector.y());
+    }
+
+    if(nPoint.y() < rect.y()){ //top far up
+        nPoint = Point_2(nPoint.x(), 2*rect.y()-nPoint.y());
+        vector = Vector_2(vector.x(), -vector.y());
+    }
+
+    vertex_ball[current_insert][start] = vector;
+    return nPoint;
+}
+
+int MTriangulation::move_step(QRectF rect){
+    float rMax = (rect.height() + rect.width())/(2*100);
     QTime timer;
     timer.start();
 
@@ -117,6 +156,9 @@ int MTriangulation::move_step(float rMax){
                 case BROWNIAN:
                 nPoint = brownianStep(p, rMax);
                 break;
+                case JUMPING_BALL:
+                nPoint = jumpBallStep(it, rMax, rect);
+                break;
                 default:
                 break;
             }
@@ -128,8 +170,6 @@ int MTriangulation::move_step(float rMax){
                     continue;
                 break;
                 case NAIVE:
-                    newPoints.push_back(nPoint);
-                    break;
                 case HINT:
                     newPointsHint.emplace_back(it, nPoint);
                 break;
@@ -144,7 +184,12 @@ int MTriangulation::move_step(float rMax){
         break;
         case NAIVE:
             clear();
-            insert_naive(newPoints);
+            current_insert = 1-current_insert;
+            insert_naive(newPointsHint);
+            vertex_ball[1-current_insert].clear();
+            nearest_neight[1-current_insert].clear();
+            nearest_neight_sqdistance[1-current_insert].clear();
+
         break;
         case HINT:
             Delaunay::clear();
@@ -152,6 +197,7 @@ int MTriangulation::move_step(float rMax){
             improv = insert_hint(newPointsHint);
             nearest_neight[1-current_insert].clear();
             nearest_neight_sqdistance[1-current_insert].clear();
+            vertex_ball[1-current_insert].clear();
         break;
     }
 
@@ -180,6 +226,17 @@ void MTriangulation::insert_naive(std::vector<Point_2>& points){
     }
 }
 
+void MTriangulation::insert_naive(std::vector<VertexMoveHint>& points){
+    CGAL::spatial_sort(points.begin(), points.end(), VertexMoveHintCompTrait());
+    Face_handle face_hint = Face_handle();
+    for(VertexMoveHint vh : points){
+        Point_2 p = vh.new_position;
+        Vertex_handle v_handle = insert(p, face_hint, vertex_ball[1-current_insert][vh.handle]);
+        face_hint = v_handle->face();
+    }
+}
+
+
 double MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
     using namespace std;
     unsigned long long number_improvement = 0;
@@ -206,7 +263,9 @@ double MTriangulation::insert_hint(std::vector<VertexMoveHint>& newPointsHint){
             }
         }
 
-        Vertex_handle v_handle = insert(nPos, vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face());
+        Vertex_handle v_handle = insert(nPos, 
+                                    vertex_hint == Vertex_handle()? Face_handle() : vertex_hint->face(), 
+                                    vertex_ball[1-current_insert][old_vertex]);
         vertex_hint = v_handle;
         newVertexs[old_vertex] = v_handle;
     }

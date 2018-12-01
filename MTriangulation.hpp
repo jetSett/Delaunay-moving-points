@@ -2,6 +2,7 @@
 #include <tuple>
 #include <array>
 #include <functional>
+#include <QtCore>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Triangulation_vertex_base_with_info_2.h>
 #include <CGAL/Delaunay_triangulation_2.h>
@@ -29,21 +30,26 @@ struct Hash_point{
 struct VertexMoveHint;
 
 class MTriangulation : public Delaunay{
-typedef std::map<Vertex_handle, Vertex_handle> Nn_map;
-typedef std::map<Vertex_handle, double> Nn_dist_map;
+
+    typedef std::map<Vertex_handle, Vertex_handle> Nn_map;
+    typedef std::map<Vertex_handle, double> Nn_dist_map;
+
+    typedef std::map<Vertex_handle, Vector_2> Ball_map;
 public:
     MTriangulation(InsertStyle, MovingStyle);
 
-    int move_step(float rMax);
+    int move_step(QRectF);
 
     Point_2 brownianStep(Point_2, float);
+    Point_2 jumpBallStep(Vertex_handle, float, QRectF);
 
     void setInsertStyle(InsertStyle);
     void setMovingStyle(MovingStyle);
 
     void insert_naive(std::vector<Point_2>&);
+    void insert_naive(std::vector<VertexMoveHint>&);
 
-    Vertex_handle insert(const Point_2&, const Face_handle& f = Face_handle());
+    Vertex_handle insert(const Point_2&, const Face_handle& f = Face_handle(), Vector_2 ball = Vector_2(0, 0));
 
     void clear();
 
@@ -60,6 +66,8 @@ private:
 
     std::array<Nn_map, 2> nearest_neight;
     std::array<Nn_dist_map, 2> nearest_neight_sqdistance;
+
+    std::array<Ball_map, 2> vertex_ball;
 };
 
 struct VertexMoveHint{

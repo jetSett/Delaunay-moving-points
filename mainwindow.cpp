@@ -100,10 +100,9 @@ void MainWindow::on_clearPushButton_clicked(bool){
 
 void MainWindow::move(){
     int elapsed = 0;
-    if(ui->brownianRadioButton->isChecked()){
+    if(ui->brownianRadioButton->isChecked() || ui->jumpingBallRadioButton->isChecked()){
         QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
-        float maxStep = (rect.height() + rect.width())/(2*100); // We are not going to go too far
-        elapsed = triangulation.move_step(maxStep);
+        elapsed = triangulation.move_step(rect);
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
         on_stopButton_clicked(true);
