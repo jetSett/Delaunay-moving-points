@@ -6,6 +6,8 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Triangulation_vertex_base_with_info_2.h>
 #include <CGAL/Delaunay_triangulation_2.h>
+#include <CGAL/Voronoi_diagram_2.h>
+#include <CGAL/Delaunay_triangulation_adaptation_traits_2.h>
 
 
 enum InsertStyle{
@@ -22,6 +24,9 @@ typedef K::Vector_2 Vector_2;
 typedef K::Iso_rectangle_2 Iso_rectangle_2;
 
 typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
+
+typedef CGAL::Delaunay_triangulation_adaptation_traits_2<Delaunay> AdaptTrait;
+typedef CGAL::Voronoi_diagram_2<Delaunay, AdaptTrait> Voronoi;
 
 struct Hash_point{
     std::size_t operator()(const Point_2& p) const noexcept;
@@ -42,6 +47,7 @@ public:
 
     Point_2 brownianStep(Point_2, float);
     Point_2 jumpBallStep(Vertex_handle, float, QRectF);
+    Point_2 lloydStep(Vertex_handle, QRectF, Voronoi&);
 
     void setInsertStyle(InsertStyle);
     void setMovingStyle(MovingStyle);

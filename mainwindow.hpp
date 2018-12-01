@@ -69,6 +69,7 @@ private:
     MTriangulation triangulation;
 
     CGAL::Qt::TriangulationGraphicsItem<MTriangulation>* tri_graphics;
+    CGAL::Qt::VoronoiGraphicsItem<Delaunay>* vor_graphics;
 
 };
 

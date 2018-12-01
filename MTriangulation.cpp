@@ -138,10 +138,35 @@ Point_2 MTriangulation::jumpBallStep(Vertex_handle start, float speed, QRectF re
     return nPoint;
 }
 
+Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect, Voronoi& vor){
+    Voronoi::Face_handle f = vor.dual(vh);
+    if(f->is_unbounded()){
+        return vh->point();
+    }
+    double x = 0, y = 0;
+    auto circ = f->ccb();
+    auto beg = circ;
+    int n = 0;
+    do{
+        n++;
+        Point_2 source_point = circ->source()->point();
+        x += source_point.x();
+        y += source_point.y();
+        circ++;
+    }while(beg != circ);
+    return Point_2(x/n, y/n);
+}
+
+
 int MTriangulation::move_step(QRectF rect){
+    Voronoi voronoi;
     float rMax = (rect.height() + rect.width())/(2*100);
     QTime timer;
     timer.start();
+
+    if(mStyle == LLOYD){
+        voronoi = Voronoi(*this);
+    }
 
     std::vector<Point_2> newPoints;
     std::vector<VertexMoveHint> newPointsHint;
@@ -153,13 +178,14 @@ int MTriangulation::move_step(QRectF rect){
             Point_2 nPoint;
 
             switch(mStyle){
-                case BROWNIAN:
+            case BROWNIAN:
                 nPoint = brownianStep(p, rMax);
                 break;
-                case JUMPING_BALL:
+            case JUMPING_BALL:
                 nPoint = jumpBallStep(it, rMax, rect);
                 break;
-                default:
+            case LLOYD:
+                nPoint = lloydStep(it, rect, voronoi);
                 break;
             }
 

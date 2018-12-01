@@ -20,8 +20,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     tri_graphics = new CGAL::Qt::TriangulationGraphicsItem<MTriangulation>(&triangulation);
+    tri_graphics->setVerticesPen(QPen(Qt::red, 5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+
+    vor_graphics = new CGAL::Qt::VoronoiGraphicsItem<Delaunay>(&triangulation);
+    vor_graphics->setEdgesPen(QPen(Qt::blue, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     scene.addItem(tri_graphics);
+    scene.addItem(vor_graphics);
 
     ui->graphicsView->setScene(&scene);
 
@@ -100,7 +105,7 @@ void MainWindow::on_clearPushButton_clicked(bool){
 
 void MainWindow::move(){
     int elapsed = 0;
-    if(ui->brownianRadioButton->isChecked() || ui->jumpingBallRadioButton->isChecked()){
+    if(ui->brownianRadioButton->isChecked() or ui->jumpingBallRadioButton->isChecked() or ui->lloydRadioButton->isChecked()){
         QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
         elapsed = triangulation.move_step(rect);
     }else{
