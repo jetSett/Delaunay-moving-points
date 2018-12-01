@@ -159,3 +159,7 @@ void MainWindow::on_jumpingBallRadioButton_clicked(){
 void MainWindow::on_lloydRadioButton_clicked(){
     triangulation.setMovingStyle(LLOYD);
 }
+
+void MainWindow::on_showVoronoiCheckBox_toggled(bool check){
+    vor_graphics->setVisible(check);
+}

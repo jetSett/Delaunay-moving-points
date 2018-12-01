@@ -45,6 +45,8 @@ public slots:
     void on_jumpingBallRadioButton_clicked();
     void on_lloydRadioButton_clicked();
 
+    void on_showVoronoiCheckBox_toggled(bool);
+
     void move();
 
 signals:
