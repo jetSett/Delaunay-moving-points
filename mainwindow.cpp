@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     vor_graphics = new CGAL::Qt::VoronoiGraphicsItem<Delaunay>(&triangulation);
     vor_graphics->setEdgesPen(QPen(Qt::blue, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    vor_graphics->setVisible(false);
 
     scene.addItem(tri_graphics);
     scene.addItem(vor_graphics);
@@ -110,7 +111,7 @@ void MainWindow::on_stepButton_clicked(bool){
 
 void MainWindow::move(){
     int elapsed = 0;
-    if(ui->brownianRadioButton->isChecked() or ui->jumpingBallRadioButton->isChecked() or ui->lloydRadioButton->isChecked()){
+    if(ui->brownianRadioButton->isChecked() or ui->bouncingBallRadioButton->isChecked() or ui->lloydRadioButton->isChecked()){
         QRectF rect = CGAL::Qt::viewportsBbox(&scene);
         elapsed = triangulation.move_step(rect);
     }else{
@@ -158,7 +159,7 @@ void MainWindow::on_cgalMoveButton_clicked(){
 void MainWindow::on_brownianRadioButton_clicked(){
     triangulation.setMovingStyle(BROWNIAN);
 }
-void MainWindow::on_jumpingBallRadioButton_clicked(){
+void MainWindow::on_bouncingBallRadioButton_clicked(){
     triangulation.setMovingStyle(BOUNCING_BALL);
 }
 void MainWindow::on_lloydRadioButton_clicked(){

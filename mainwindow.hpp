@@ -44,7 +44,7 @@ public slots:
     void on_cgalMoveButton_clicked();
 
     void on_brownianRadioButton_clicked();
-    void on_jumpingBallRadioButton_clicked();
+    void on_bouncingBallRadioButton_clicked();
     void on_lloydRadioButton_clicked();
 
     void on_showVoronoiCheckBox_toggled(bool);
