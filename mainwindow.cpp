@@ -159,7 +159,7 @@ void MainWindow::on_brownianRadioButton_clicked(){
     triangulation.setMovingStyle(BROWNIAN);
 }
 void MainWindow::on_jumpingBallRadioButton_clicked(){
-    triangulation.setMovingStyle(JUMPING_BALL);
+    triangulation.setMovingStyle(BOUNCING_BALL);
 }
 void MainWindow::on_lloydRadioButton_clicked(){
     triangulation.setMovingStyle(LLOYD);

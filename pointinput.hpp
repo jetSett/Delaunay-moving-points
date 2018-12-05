@@ -1,6 +1,6 @@
 /**
 
-    File taken from the demo "Triangulation_2" of the CGAL d
+    File taken from the demo "Triangulation_2" of the CGAL library
 
 **/
 

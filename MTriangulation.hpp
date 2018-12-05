@@ -16,7 +16,7 @@ enum InsertStyle{
 };
 
 enum MovingStyle{
-    BROWNIAN, JUMPING_BALL, LLOYD
+    BROWNIAN, BOUNCING_BALL, LLOYD
 };
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
@@ -32,14 +32,18 @@ typedef CGAL::Delaunay_triangulation_2<K> Delaunay;
 typedef CGAL::Delaunay_triangulation_adaptation_traits_2<Delaunay> AdaptTrait;
 typedef CGAL::Voronoi_diagram_2<Delaunay, AdaptTrait> Voronoi;
 
-struct Hash_point{
-    std::size_t operator()(const Point_2& p) const noexcept;
-};
-
 struct VertexMoveHint;
 
-class MTriangulation : public Delaunay{
+/**
+ * @brief Implémentation of the Delaunay triangulation in order to make point move
+ * 
+ */
 
+class MTriangulation : public Delaunay{
+    /**
+     * @brief Types used to store the nearest neightboard and their distance to each vertex
+     * @note Vertex_handle is a pointer in disguise, so very easily hashable
+     */
     typedef std::unordered_map<Vertex_handle, Vertex_handle> Nn_map;
     typedef std::unordered_map<Vertex_handle, double> Nn_dist_map;
 
@@ -47,40 +51,104 @@ class MTriangulation : public Delaunay{
 public:
     MTriangulation(InsertStyle, MovingStyle);
 
-    int move_step(QRectF);
-
+    /**
+     * @brief Execute a move step
+     * @arg sceneBox the current scenebox
+     * @return int time elapsed in ms
+     */
+    int move_step(QRectF sceneBox);
 
     void setInsertStyle(InsertStyle);
     void setMovingStyle(MovingStyle);
 
+    /**
+     * @brief Insert points in a "naive" way : spacial sorting + insertion with previous point as hint
+     * 
+     */
     void insert_naive(std::vector<Point_2>&);
 
-    Vertex_handle insert(const Point_2&, const Face_handle& f = Face_handle(), Vector_2 ball = Vector_2(0, 0));
+    /**
+     * @brief Insert a new point in the triangulation
+     * 
+     * @param hint hint for the insertion
+     * @param ball the ball attributed to the point for bouncing ball (if 0, will be chosen randomly)
+     * @return Vertex_handle a handle to the newly created point
+     */
+    Vertex_handle insert(const Point_2&, const Face_handle& hint = Face_handle(), Vector_2 ball = Vector_2(0, 0));
 
     void clear();
 
 private:
-    Point_2 brownianStep(Point_2, float);
-    Point_2 jumpBallStep(Vertex_handle, float, QRectF);
-    Point_2 lloydStep(Vertex_handle, QRectF,  long double x=0, long double y=0, int n=0);
+    /**
+     * @brief does a jumping ball movement step
+     * 
+     * @param rMax the maximum step of each movement
+     * @param sceneBox the current scenebox
+     * @return Point_2 the new position of the vertex
+     */
+    Point_2 brownianStep(Point_2, float rMax);
 
+    /**
+     * @brief does a bouncing ball movement step
+     * 
+     * @param speed the maximum step of each movement
+     * @param sceneBox the current scenebox (used for bouncing)
+     * @return Point_2 the new position of the vertex
+     */
+    Point_2 bouncingBallStep(Vertex_handle, float speed, QRectF sceneBox);
+
+    /**
+     * @brief does a lloyd movement step
+     * 
+     * @param sceneBox the current scenebox
+     * @param x offset for the x coord of the new point (used to handle corner of the scenebox)
+     * @param y offset for the y coord of the new point (used to handle corner of the scenebox)
+     * @param n offset for the number of point used in the average (used to handle corner of the scenebox)
+     * @return Point_2 the new position of the vertex
+     */
+    Point_2 lloydStep(Vertex_handle, QRectF sceneBox,  long double x=0, long double y=0, int n=0);
+
+    /**
+     * @brief Insert points in a "naive" way : spacial sorting + insertion with previous hint (with Hint for implementation purpose)
+     * 
+     */
     void insert_naive(std::vector<VertexMoveHint>&);
 
+    /**
+     * @brief Update the NN of a vertex and the vertex itself in order to maintain nearest_neight and nearest_neight_sqdistance
+     * 
+     */
     void update_nn(Vertex_handle);
 
+
+    /**
+     * @brief Insert the point using the "hint method" : first spacial sorting of the point, then when it is useful, use the previous NN's new position as hint
+     * 
+     * @return double the fraction of "New hint" used
+     */
     double insert_hint(std::vector<VertexMoveHint>&);
 
     InsertStyle iStyle;
     MovingStyle mStyle;
 
     int current_insert;
-
+    /**
+     * @brief Those arrays are here to work as double buffering : we swap them at each new moving (when not using CGAL::move)
+     * 
+     */
     std::array<Nn_map, 2> nearest_neight;
     std::array<Nn_dist_map, 2> nearest_neight_sqdistance;
-
+    /**
+     * @brief The direction and intensity of movement of the points for MOVING_POINT moving style
+     * 
+     */
     std::array<Ball_map, 2> vertex_ball;
 };
 
+/**
+ * @brief Structure agregating a Vertex_handle (the previous vertex pointer) and the new position of this vertex
+ * 
+ */
 struct VertexMoveHint{
     VertexMoveHint(const MTriangulation::Vertex_handle& h, const Point_2& p) : handle(h), new_position(p){
     }
