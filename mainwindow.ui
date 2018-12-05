@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>985</width>
-    <height>673</height>
+    <height>689</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -144,9 +144,6 @@
                </layout>
               </item>
              </layout>
-             <zorder>lloydRadioButton</zorder>
-             <zorder>brownianRadioButton</zorder>
-             <zorder>jumpingBallRadioButton</zorder>
              <zorder></zorder>
             </widget>
            </item>
@@ -211,6 +208,9 @@
              <property name="maximum">
               <number>1000000</number>
              </property>
+             <property name="value">
+              <number>20</number>
+             </property>
             </widget>
            </item>
            <item>
@@ -230,6 +230,13 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QPushButton" name="stepButton">
+             <property name="text">
+              <string>Step</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
@@ -244,14 +251,28 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
-            <widget class="QCheckBox" name="showVoronoiCheckBox">
-             <property name="text">
-              <string>Show Voronoi</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
+              <widget class="QCheckBox" name="showDelaunayCheckBox">
+               <property name="text">
+                <string>Show Delaunay</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="showVoronoiCheckBox">
+               <property name="text">
+                <string>Show Voronoi</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <widget class="QTextEdit" name="outputText">
@@ -300,7 +321,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="delauneyMovingTypeButtonGroup"/>
   <buttongroup name="motionTypeButtonGroup"/>
+  <buttongroup name="delauneyMovingTypeButtonGroup"/>
  </buttongroups>
 </ui>

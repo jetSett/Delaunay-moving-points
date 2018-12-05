@@ -21,14 +21,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     tri_graphics = new CGAL::Qt::TriangulationGraphicsItem<MTriangulation>(&triangulation);
     tri_graphics->setVerticesPen(QPen(Qt::red, 5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    tri_graphics->setEdgesPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     vor_graphics = new CGAL::Qt::VoronoiGraphicsItem<Delaunay>(&triangulation);
     vor_graphics->setEdgesPen(QPen(Qt::blue, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     scene.addItem(tri_graphics);
     scene.addItem(vor_graphics);
-
-    ui->graphicsView->setScene(&scene);
 
     QObject::connect(this, SIGNAL(changed()),
              tri_graphics, SLOT(modelChanged()));
@@ -37,15 +36,17 @@ MainWindow::MainWindow(QWidget *parent) :
     pi = new TriangulationPointInputAndConflictZone<MTriangulation>(&scene, &triangulation, this );
 
     scene.installEventFilter(pi);
-
+    scene.setItemIndexMethod(QGraphicsScene::NoIndex);
     scene.setSceneRect(-100, -100, 100, 100);
+    ui->graphicsView->matrix().scale(1, -1);
 
+    ui->graphicsView->setScene(&scene);
 
     QObject::connect(pi, SIGNAL(generate(CGAL::Object)),
              this, SLOT(processInput(CGAL::Object)));
 
     // Navigation
-      this->addNavigation(ui->graphicsView);
+      addNavigation(ui->graphicsView);
 
       QObject::connect(&timer, SIGNAL(timeout()), this, SLOT(move()));
 }
@@ -94,7 +95,6 @@ void MainWindow::addRandomPoints(unsigned int number){
         QString(" points in ") + QString::number(timer.elapsed()) + QString("ms\n"));
     QApplication::restoreOverrideCursor();
     Q_EMIT( changed());
-
 }
 
 void MainWindow::on_clearPushButton_clicked(bool){
@@ -103,10 +103,15 @@ void MainWindow::on_clearPushButton_clicked(bool){
     Q_EMIT(changed());
 }
 
+void MainWindow::on_stepButton_clicked(bool){
+    move();
+}
+
+
 void MainWindow::move(){
     int elapsed = 0;
     if(ui->brownianRadioButton->isChecked() or ui->jumpingBallRadioButton->isChecked() or ui->lloydRadioButton->isChecked()){
-        QRectF rect = CGAL::Qt::viewportsBbox(&scene);;
+        QRectF rect = CGAL::Qt::viewportsBbox(&scene);
         elapsed = triangulation.move_step(rect);
     }else{
         QMessageBox::critical(this, "Not implemented", "This functionality was not implemented yet");
@@ -162,4 +167,10 @@ void MainWindow::on_lloydRadioButton_clicked(){
 
 void MainWindow::on_showVoronoiCheckBox_toggled(bool check){
     vor_graphics->setVisible(check);
+    Q_EMIT(changed());
+}
+
+void MainWindow::on_showDelaunayCheckBox_toggled(bool check){
+    tri_graphics->setVisibleEdges(check);
+    Q_EMIT(changed());
 }

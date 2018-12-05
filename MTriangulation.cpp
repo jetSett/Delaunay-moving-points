@@ -44,7 +44,6 @@ MTriangulation::Vertex_handle MTriangulation::insert(const Point_2& p, const Fac
     Ball_map *vBall = &(vertex_ball[current_insert]);
 
     if(ball == Vector_2(0, 0)){
-        D("coucou")
         float r = 2*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX))-1; // random [-1, 1]   
         float theta = 2*3.1415*(static_cast <float> (rand()) / static_cast <float> (RAND_MAX)); // random [0, 2pi] 
         ball = r*Vector_2(cos(theta), sin(theta));
@@ -138,38 +137,125 @@ Point_2 MTriangulation::jumpBallStep(Vertex_handle start, float speed, QRectF re
     return nPoint;
 }
 
-Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect, Voronoi& vor){
-    Voronoi::Face_handle f = vor.dual(vh);
-    if(f->is_unbounded()){
-        return vh->point();
+Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect,  long double x, long double y, int n){
+    auto contained_in_window= [rect](Point_2 p){
+        return rect.contains(p.x(), p.y());
+    };
+
+    if(not contained_in_window(vh->point())){ // we do not move point outside the window
+            return vh->point();
     }
-    double x = 0, y = 0;
-    auto circ = f->ccb();
-    auto beg = circ;
-    int n = 0;
+
+    Segment_2 topWindow(Point_2(rect.left(), rect.top()), Point_2(rect.right(), rect.top()));
+    Segment_2 bottomWindow(Point_2(rect.left(), rect.bottom()), Point_2(rect.right(), rect.bottom()));
+    Segment_2 leftWindow(Point_2(rect.left(), rect.top()), Point_2(rect.left(), rect.bottom()));
+    Segment_2 rightWindow(Point_2(rect.right(), rect.top()), Point_2(rect.right(), rect.bottom()));
+
+    Edge_circulator begin = vh->incident_edges();
+    Edge_circulator current = begin;
+    std::unordered_map<Point_2, bool, Hash_point> points_already_added;
+
+    // Some useful subroutine in order to add points
+    auto add_if_not_adlready_done= [&points_already_added,&x, &y, &n](Point_2 s){
+        if(points_already_added.find(s) == points_already_added.end()){
+            points_already_added[s] = true;
+            x += s.x();
+            y += s.y();
+            n++;
+        }
+    };
+
+    auto insert_intersection_segseg = [add_if_not_adlready_done](Segment_2 seg, Segment_2 target){
+        auto intersect = CGAL::intersection(seg, target);
+        if(intersect){
+            Point_2 *intersect_point = boost::get<Point_2>(&*intersect);
+            add_if_not_adlready_done(*intersect_point);
+        }
+    };
+    auto insert_intersection_rayseg = [add_if_not_adlready_done](Ray_2 r, Segment_2 target){
+        auto intersect = CGAL::intersection(r, target);
+        if(intersect){
+            Point_2 *intersect_point = boost::get<Point_2>(&*intersect);
+            add_if_not_adlready_done(*intersect_point);
+        }
+    };
+    auto insert_intersection_lineseg = [add_if_not_adlready_done](Line_2 l, Segment_2 target){
+        auto intersect = CGAL::intersection(l, target);
+        if(intersect){
+            Point_2 *intersect_point = boost::get<Point_2>(&*intersect);
+            add_if_not_adlready_done(*intersect_point);
+        }
+    };
+
     do{
-        n++;
-        Point_2 source_point = circ->source()->point();
-        x += source_point.x();
-        y += source_point.y();
-        circ++;
-    }while(beg != circ);
-    return Point_2(x/n, y/n);
+        if(is_infinite(current)){
+            current++;
+            continue;
+        }
+        auto d = dual(*current);
+        Segment_2 seg;
+        Line_2 lin;
+        Ray_2 ray;
+        if(assign(seg, d)){
+            if(contained_in_window(seg.target())){
+                add_if_not_adlready_done(seg.target());
+            }else{
+                insert_intersection_segseg(seg, topWindow);
+                insert_intersection_segseg(seg, bottomWindow);
+                insert_intersection_segseg(seg, rightWindow);
+                insert_intersection_segseg(seg, leftWindow);
+            }
+            if(contained_in_window(seg.source())){
+                add_if_not_adlready_done(seg.source());
+            }else{
+                insert_intersection_segseg(seg, topWindow);
+                insert_intersection_segseg(seg, bottomWindow);
+                insert_intersection_segseg(seg, rightWindow);
+                insert_intersection_segseg(seg, leftWindow);
+
+            }
+        }else{ // this is an infinite face
+            if(assign(lin, d)){
+                insert_intersection_lineseg(lin, topWindow);
+                insert_intersection_lineseg(lin, bottomWindow);
+                insert_intersection_lineseg(lin, leftWindow);
+                insert_intersection_lineseg(lin, rightWindow);
+            }else if(assign(ray, d)){
+                if(contained_in_window(ray.source())){
+                    add_if_not_adlready_done(ray.source());
+                }
+                insert_intersection_rayseg(ray, topWindow);
+                insert_intersection_rayseg(ray, bottomWindow);
+                insert_intersection_rayseg(ray, leftWindow);
+                insert_intersection_rayseg(ray, rightWindow);
+            }else{
+                D("Error")
+            }
+        }
+        current++;
+    }while(current != begin);
+    Point_2 newPoint(x/n, y/n);
+    
+    return newPoint;
 }
 
 
 int MTriangulation::move_step(QRectF rect){
-    Voronoi voronoi;
     float rMax = (rect.height() + rect.width())/(2*100);
     QTime timer;
     timer.start();
 
-    if(mStyle == LLOYD){
-        voronoi = Voronoi(*this);
-    }
-
     std::vector<Point_2> newPoints;
     std::vector<VertexMoveHint> newPointsHint;
+
+    Vertex_handle closest_tl, closest_tr, closest_bl, closest_br;
+
+    if(mStyle == LLOYD){
+        closest_tl = nearest_vertex(Point_2(rect.left(), rect.top()));
+        closest_bl = nearest_vertex(Point_2(rect.left(), rect.bottom()));
+        closest_tr = nearest_vertex(Point_2(rect.right(), rect.top()));
+        closest_br = nearest_vertex(Point_2(rect.right(), rect.bottom()));
+    }
 
     for(auto it = all_vertices_begin(); it != all_vertices_end(); ++it){
         if(not is_infinite(it)){
@@ -185,7 +271,29 @@ int MTriangulation::move_step(QRectF rect){
                 nPoint = jumpBallStep(it, rMax, rect);
                 break;
             case LLOYD:
-                nPoint = lloydStep(it, rect, voronoi);
+                long double x =0, y=0;
+                int n = 0;
+                if(it == closest_bl){
+                    y += rect.bottom();
+                    x += rect.left();
+                    n++;
+                }
+                if(it == closest_tl){
+                    y += rect.top();
+                    x += rect.left();
+                    n++;
+                }
+                if(it == closest_br){
+                    y += rect.bottom();
+                    x += rect.right();
+                    n++;
+                }
+                if(it == closest_tr){
+                    y += rect.top();
+                    x += rect.right();
+                    n++;
+                }
+                nPoint = lloydStep(it, rect, x, y, n);
                 break;
             }
 

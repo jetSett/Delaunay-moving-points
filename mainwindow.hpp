@@ -34,6 +34,7 @@ public slots:
 
     void on_startButton_clicked(bool checked);
     void on_stopButton_clicked(bool checked);
+    void on_stepButton_clicked(bool);
 
     void on_delaySpinBox_valueChanged(int ms);
 
@@ -46,6 +47,7 @@ public slots:
     void on_lloydRadioButton_clicked();
 
     void on_showVoronoiCheckBox_toggled(bool);
+    void on_showDelaunayCheckBox_toggled(bool);
 
     void move();
 
