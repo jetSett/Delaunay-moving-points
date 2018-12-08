@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    setWindowTitle("Moving Points");
+
     tri_graphics = new CGAL::Qt::TriangulationGraphicsItem<MTriangulation>(&triangulation);
     tri_graphics->setVerticesPen(QPen(Qt::red, 5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     tri_graphics->setEdgesPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
