@@ -256,6 +256,16 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
+              <widget class="QCheckBox" name="showPointsCheckBox">
+               <property name="text">
+                <string>Show Points</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QCheckBox" name="showDelaunayCheckBox">
                <property name="text">
                 <string>Show Delaunay</string>
@@ -314,7 +324,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="delauneyMovingTypeButtonGroup"/>
   <buttongroup name="motionTypeButtonGroup"/>
+  <buttongroup name="delauneyMovingTypeButtonGroup"/>
  </buttongroups>
 </ui>

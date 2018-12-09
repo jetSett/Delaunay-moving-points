@@ -49,6 +49,7 @@ public slots:
 
     void on_showVoronoiCheckBox_toggled(bool);
     void on_showDelaunayCheckBox_toggled(bool);
+    void on_showPointsCheckBox_toggled(bool);
 
     void move();
 

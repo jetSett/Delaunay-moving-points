@@ -101,12 +101,10 @@ private:
      * @brief does a lloyd movement step
      * 
      * @param sceneBox the current scenebox
-     * @param x offset for the x coord of the new point (used to handle corner of the scenebox)
-     * @param y offset for the y coord of the new point (used to handle corner of the scenebox)
-     * @param n offset for the number of point used in the average (used to handle corner of the scenebox)
+     * @param points_convex_hull offset for the points into the convex hull (used to handle corner of the viewport)
      * @return Point_2 the new position of the vertex
      */
-    Point_2 lloydStep(Vertex_handle, QRectF sceneBox,  long double x=0, long double y=0, int n=0);
+    Point_2 lloydStep(Vertex_handle, QRectF sceneBox,  std::vector<Point_2>& points_convex_hull);
 
     /**
      * @brief Insert points in a "naive" way : spacial sorting + insertion with previous hint (with Hint for implementation purpose)

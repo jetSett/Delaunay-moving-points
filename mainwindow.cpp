@@ -177,3 +177,8 @@ void MainWindow::on_showDelaunayCheckBox_toggled(bool check){
     tri_graphics->setVisibleEdges(check);
     Q_EMIT(changed());
 }
+
+void MainWindow::on_showPointsCheckBox_toggled(bool check){
+    tri_graphics->setVisibleVertices(check);
+    Q_EMIT(changed());
+}

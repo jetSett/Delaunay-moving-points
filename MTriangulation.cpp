@@ -1,7 +1,9 @@
 #define Dn(x) std::cout << #x << " : " << (x) << std::endl;
 #define D(x) std::cout << (x) << std::endl;
 #include <QTime>
+#include <cmath>
 #include <CGAL/nearest_neighbor_delaunay_2.h>
+#include <CGAL/centroid.h>
 #include "MTriangulation.hpp"
 
 /**
@@ -108,7 +110,6 @@ void MTriangulation::update_nn(Vertex_handle vh){
         circ++;
     }while(circ != begin);
     nn_dist->at(vh) = min_dist;
-
 }
 
 void MTriangulation::clear(){
@@ -153,7 +154,8 @@ Point_2 MTriangulation::bouncingBallStep(Vertex_handle start, float speed, QRect
     return nPoint;
 }
 
-Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect,  long double x, long double y, int n){
+
+Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect,  std::vector<Point_2>& points_convex_hull){
     // routine used everywhere else in this function
     auto contained_in_window= [rect](Point_2 p){
         return rect.contains(p.x(), p.y());
@@ -172,12 +174,10 @@ Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect,  long double x,
     std::unordered_map<Point_2, bool, Hash_point> points_already_added;
 
     // we only want to add the points ONCE
-    auto add_if_not_adlready_done= [&points_already_added,&x, &y, &n](Point_2 s){
+    auto add_if_not_adlready_done= [&points_already_added, &points_convex_hull, vh](Point_2 s){
         if(points_already_added.find(s) == points_already_added.end()){
             points_already_added[s] = true;
-            x += s.x();
-            y += s.y();
-            n++;
+            points_convex_hull.push_back(s);
         }
     };
 
@@ -254,9 +254,9 @@ Point_2 MTriangulation::lloydStep(Vertex_handle vh, QRectF rect,  long double x,
         
         current++;
     }while(current != begin);
-    Point_2 newPoint(x/n, y/n);
     
-    return newPoint;
+    Point_2 c = CGAL::centroid(points_convex_hull.begin(), points_convex_hull.end());
+    return c;
 }
 
 
@@ -292,30 +292,21 @@ int MTriangulation::move_step(QRectF rect){
                 nPoint = bouncingBallStep(it, rMax, rect);
                 break;
             case LLOYD:
-                long double x =0, y=0;
-                int n = 0;
                 // manage the case of the corners
+                std::vector<Point_2> corner_points;
                 if(it == closest_bl){
-                    y += rect.bottom();
-                    x += rect.left();
-                    n++;
+                    corner_points.push_back(Point_2(rect.left(), rect.bottom()));
                 }
                 if(it == closest_tl){
-                    y += rect.top();
-                    x += rect.left();
-                    n++;
+                    corner_points.push_back(Point_2(rect.left(), rect.top()));
                 }
                 if(it == closest_br){
-                    y += rect.bottom();
-                    x += rect.right();
-                    n++;
+                    corner_points.push_back(Point_2(rect.right(), rect.bottom()));
                 }
                 if(it == closest_tr){
-                    y += rect.top();
-                    x += rect.right();
-                    n++;
+                    corner_points.push_back(Point_2(rect.right(), rect.top()));
                 }
-                nPoint = lloydStep(it, rect, x, y, n);
+                nPoint = lloydStep(it, rect, corner_points);
                 break;
             }
 
