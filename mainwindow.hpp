@@ -39,7 +39,7 @@ public slots:
 
     void on_delaySpinBox_valueChanged(int ms);
 
-    void on_naiveRadioButton_clicked();
+    void on_classicRadioButton_clicked();
     void on_hintRadioButton_clicked();
     void on_cgalMoveButton_clicked();
 

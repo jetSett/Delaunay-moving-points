@@ -15,7 +15,7 @@ using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), triangulation(NAIVE, BROWNIAN)
+    ui(new Ui::MainWindow), triangulation(CLASSIC, BROWNIAN)
 {
     ui->setupUi(this);
 
@@ -93,7 +93,7 @@ void MainWindow::addRandomPoints(unsigned int number){
     QTime timer;
     timer.start();
 
-    triangulation.insert_naive(points);
+    triangulation.insert_classic(points);
     log(QString("Inserted ") + QString::number(number) + 
         QString(" points in ") + QString::number(timer.elapsed()) + QString("ms\n"));
     QApplication::restoreOverrideCursor();
@@ -146,8 +146,8 @@ void MainWindow::log(const QString& text){
     ui->outputText->insertPlainText(text);
 }
 
-void MainWindow::on_naiveRadioButton_clicked(){
-    triangulation.setInsertStyle(NAIVE);
+void MainWindow::on_classicRadioButton_clicked(){
+    triangulation.setInsertStyle(CLASSIC);
 }
 
 void MainWindow::on_hintRadioButton_clicked(){

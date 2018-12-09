@@ -112,9 +112,9 @@
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_2">
                 <item>
-                 <widget class="QRadioButton" name="naiveRadioButton">
+                 <widget class="QRadioButton" name="classicRadioButton">
                   <property name="text">
-                   <string>Naive</string>
+                   <string>Classic</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -306,6 +306,9 @@
              </property>
              <property name="readOnly">
               <bool>true</bool>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::NoTextInteraction</set>
              </property>
             </widget>
            </item>

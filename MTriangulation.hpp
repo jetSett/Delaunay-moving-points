@@ -12,7 +12,7 @@
 #include <CGAL/Object.h>
 
 enum InsertStyle{
-    NAIVE, HINT, MOVE_CGAL
+    CLASSIC, HINT, MOVE_CGAL
 };
 
 enum MovingStyle{
@@ -62,10 +62,10 @@ public:
     void setMovingStyle(MovingStyle);
 
     /**
-     * @brief Insert points in a "naive" way : spacial sorting + insertion with previous point as hint
+     * @brief Insert points in the "classical" way : spacial sorting + insertion with previous point as hint
      * 
      */
-    void insert_naive(std::vector<Point_2>&);
+    void insert_classic(std::vector<Point_2>&);
 
     /**
      * @brief Insert a new point in the triangulation
@@ -107,10 +107,10 @@ private:
     Point_2 lloydStep(Vertex_handle, QRectF sceneBox,  std::vector<Point_2>& points_convex_hull);
 
     /**
-     * @brief Insert points in a "naive" way : spacial sorting + insertion with previous hint (with Hint for implementation purpose)
+     * @brief Insert points in a "classic" way : spacial sorting + insertion with previous hint (with Hint for implementation purpose)
      * 
      */
-    void insert_naive(std::vector<VertexMoveHint>&);
+    void insert_classic(std::vector<VertexMoveHint>&);
 
     /**
      * @brief Update the NN of a vertex and the vertex itself in order to maintain nearest_neight and nearest_neight_sqdistance

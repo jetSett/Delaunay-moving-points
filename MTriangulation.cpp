@@ -315,7 +315,7 @@ int MTriangulation::move_step(QRectF rect){
                     move(it, nPoint);
                     update_nn(it);
                 break;
-                case NAIVE:
+                case CLASSIC:
                 case HINT:
                     newPointsHint.emplace_back(it, nPoint);
                 break;
@@ -330,11 +330,11 @@ int MTriangulation::move_step(QRectF rect){
         case MOVE_CGAL:
         break;
         // If we are using the double buffering, we need to clear it
-        case NAIVE:
+        case CLASSIC:
             clear();
             current_insert = 1-current_insert;
 
-            insert_naive(newPointsHint);
+            insert_classic(newPointsHint);
 
             vertex_ball[1-current_insert].clear();
             nearest_neight[1-current_insert].clear();
@@ -370,7 +370,7 @@ void MTriangulation::setMovingStyle(MovingStyle ms){
     mStyle = ms;
 }
 
-void MTriangulation::insert_naive(std::vector<Point_2>& points){
+void MTriangulation::insert_classic(std::vector<Point_2>& points){
     CGAL::spatial_sort(points.begin(), points.end());
     Face_handle face_hint = Face_handle();
     for(Point_2 p : points){
@@ -379,7 +379,7 @@ void MTriangulation::insert_naive(std::vector<Point_2>& points){
     }
 }
 
-void MTriangulation::insert_naive(std::vector<VertexMoveHint>& points){
+void MTriangulation::insert_classic(std::vector<VertexMoveHint>& points){
     CGAL::spatial_sort(points.begin(), points.end(), VertexMoveHintCompTrait());
     Face_handle face_hint = Face_handle();
     for(VertexMoveHint vh : points){
